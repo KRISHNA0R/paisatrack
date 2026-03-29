@@ -5,6 +5,7 @@ import { useBudget } from '../hooks/useBudget';
 import BottomNav from '../components/BottomNav';
 import { formatCurrency } from '../utils/formatCurrency';
 import { getLast6Months, getMonthDisplay, getDaysInMonth } from '../utils/dateHelpers';
+import API_BASE from '../utils/api';
 
 const MonthlyPage = () => {
   const { user } = useAuth();
@@ -26,7 +27,7 @@ const MonthlyPage = () => {
     try {
       const data = await Promise.all(
         months.map(async (month) => {
-          const res = await fetch(`/api/summary/${month}`, {
+          const res = await fetch(`${API_BASE}/api/summary/${month}`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
           if (res.ok) {

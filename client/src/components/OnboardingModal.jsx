@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/formatCurrency';
 import RainbowButton from './RainbowButton';
+import API_BASE from '../utils/api';
 
 const OnboardingModal = ({ isOpen, onComplete }) => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ const OnboardingModal = ({ isOpen, onComplete }) => {
   const handleFinish = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/budget', {
+      const res = await fetch(`${API_BASE}/api/budget`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

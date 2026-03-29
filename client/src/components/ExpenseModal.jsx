@@ -5,6 +5,7 @@ import { useBudget } from '../hooks/useBudget';
 import RainbowButton from './RainbowButton';
 import Toast from './Toast';
 import { formatCurrency } from '../utils/formatCurrency';
+import API_BASE from '../utils/api';
 
 const CATEGORY_KEYWORDS = {
   'Petrol': ['petrol', 'fuel', 'pump', 'gas', 'diesel', 'petro', 'hp', 'bp', 'shell', 'ioc'],
@@ -119,7 +120,7 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
     setError('');
 
     try {
-      const res = await fetch('/api/expenses', {
+      const res = await fetch(`${API_BASE}/api/expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

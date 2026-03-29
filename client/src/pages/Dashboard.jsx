@@ -15,6 +15,7 @@ import PredictiveAlerts from '../components/PredictiveAlerts';
 import { CardSkeleton, ChartSkeleton, TableSkeleton } from '../components/Skeleton';
 import { formatCurrency, formatCurrencyCompact } from '../utils/formatCurrency';
 import { getCurrentMonth, getNextMonth, getPrevMonth, getMonthDisplay, formatDateTime } from '../utils/dateHelpers';
+import API_BASE from '../utils/api';
 
 const Dashboard = ({ onOpenOnboarding }) => {
   const { user } = useAuth();
@@ -35,10 +36,10 @@ const Dashboard = ({ onOpenOnboarding }) => {
     setLoading(true);
     try {
       const [expRes, sumRes] = await Promise.all([
-        fetch(`/api/expenses?month=${currentMonth}`, {
+        fetch(`${API_BASE}/api/expenses?month=${currentMonth}`, {
           headers: { 'Authorization': `Bearer ${user.token}` }
         }),
-        fetch(`/api/summary/${currentMonth}`, {
+        fetch(`${API_BASE}/api/summary/${currentMonth}`, {
           headers: { 'Authorization': `Bearer ${user.token}` }
         })
       ]);
@@ -99,7 +100,7 @@ const Dashboard = ({ onOpenOnboarding }) => {
 
   const handleDeleteExpense = async (id) => {
     try {
-      const res = await fetch(`/api/expenses/${id}`, {
+      const res = await fetch(`${API_BASE}/api/expenses/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${user.token}` }
       });

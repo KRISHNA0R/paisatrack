@@ -5,6 +5,7 @@ import { useBudget } from '../hooks/useBudget';
 import BottomNav from '../components/BottomNav';
 import RainbowButton from '../components/RainbowButton';
 import { formatCurrency } from '../utils/formatCurrency';
+import API_BASE from '../utils/api';
 
 const Settings = () => {
   const { user } = useAuth();
@@ -71,7 +72,7 @@ const Settings = () => {
 
   const exportCSV = async () => {
     try {
-      const res = await fetch(`/api/expenses?month=${new Date().toISOString().slice(0, 7)}`, {
+      const res = await fetch(`${API_BASE}/api/expenses?month=${new Date().toISOString().slice(0, 7)}`, {
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
       const expenses = await res.json();

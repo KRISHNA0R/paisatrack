@@ -12,6 +12,7 @@ import OnboardingModal from './components/OnboardingModal';
 import EtherealShadow from './components/EtherealShadow';
 import SmoothCursor from './components/SmoothCursor';
 import LoadingScreen from './components/LoadingScreen';
+import API_BASE from './utils/api';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -34,7 +35,7 @@ const AppRoutes = () => {
       if (user?.token && isAuthenticated) {
         setCheckingBudget(true);
         try {
-          const res = await fetch('/api/budget', {
+          const res = await fetch(`${API_BASE}/api/budget`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
           

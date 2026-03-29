@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../utils/api';
 
 export const useBudget = () => {
   const [budget, setBudget] = useState(null);
@@ -12,7 +13,7 @@ export const useBudget = () => {
     
     try {
       setLoading(true);
-      const res = await fetch('/api/budget', {
+      const res = await fetch(`${API_BASE}/api/budget`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -38,7 +39,7 @@ export const useBudget = () => {
 
   const updateBudget = async (updates) => {
     try {
-      const res = await fetch('/api/budget', {
+      const res = await fetch(`${API_BASE}/api/budget`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

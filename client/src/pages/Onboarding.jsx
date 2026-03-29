@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import API_BASE from '../utils/api';
 
 const Onboarding = () => {
   const { user } = useAuth();
@@ -24,7 +25,7 @@ const Onboarding = () => {
   const handleFinish = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/budget', {
+      const res = await fetch(`${API_BASE}/api/budget`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

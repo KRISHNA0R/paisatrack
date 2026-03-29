@@ -6,6 +6,7 @@ import { useBudget } from '../hooks/useBudget';
 import BottomNav from '../components/BottomNav';
 import { formatCurrency } from '../utils/formatCurrency';
 import { getCurrentMonth } from '../utils/dateHelpers';
+import API_BASE from '../utils/api';
 
 const AddExpensePage = () => {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ const AddExpensePage = () => {
     setError('');
 
     try {
-      const res = await fetch('/api/expenses', {
+      const res = await fetch(`${API_BASE}/api/expenses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
