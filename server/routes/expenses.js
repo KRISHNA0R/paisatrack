@@ -1,12 +1,12 @@
 import express from 'express';
-import db from '../database.js';
+import Expense from '../models/Expense.js';
 import { verifyFirebaseToken } from '../middleware/verifyFirebaseToken.js';
 
 const router = express.Router();
 
 router.use(verifyFirebaseToken);
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { amount, category, note, date } = req.body;
     
@@ -14,75 +14,72 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'Amount and category required' });
     }
     
-    const stmt = db.prepare(`
-      INSERT INTO expenses (userId, amount, category, note, date)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    
-    const result = stmt.run(
-      req.user.uid, 
-      parseFloat(amount), 
-      category, 
-      note || '', 
-      date || new Date().toISOString()
-    );
-    
-    res.status(201).json({
-      _id: result.lastInsertRowid,
+    const expense = new Expense({
       userId: req.user.uid,
       amount: parseFloat(amount),
       category,
       note: note || '',
-      date: date || new Date().toISOString()
+      date: date ? new Date(date) : new Date()
+    });
+    
+    await expense.save();
+    
+    res.status(201).json({
+      _id: expense._id,
+      userId: expense.userId,
+      amount: expense.amount,
+      category: expense.category,
+      note: expense.note,
+      date: expense.date.toISOString()
     });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error creating expense:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { month } = req.query;
-    let query = 'SELECT * FROM expenses WHERE userId = ?';
-    let params = [req.user.uid];
+    let query = { userId: req.user.uid };
     
     if (month) {
       const [year, monthNum] = month.split('-');
-      query += ` AND date LIKE ?`;
-      params.push(`${year}-${monthNum.padStart(2, '0')}%`);
+      const startDate = new Date(parseInt(year), parseInt(monthNum) - 1, 1);
+      const endDate = new Date(parseInt(year), parseInt(monthNum), 0, 23, 59, 59, 999);
+      query.date = { $gte: startDate, $lte: endDate };
     }
     
-    query += ' ORDER BY date DESC';
-    
-    const expenses = db.prepare(query).all(...params);
+    const expenses = await Expense.find(query).sort({ date: -1 }).lean();
     
     res.json(expenses.map(exp => ({
-      _id: exp.id,
+      _id: exp._id,
       userId: exp.userId,
       amount: exp.amount,
       category: exp.category,
-      note: exp.note,
-      date: exp.date
+      note: exp.note || '',
+      date: exp.date.toISOString()
     })));
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error fetching expenses:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const result = db.prepare('DELETE FROM expenses WHERE id = ? AND userId = ?')
-      .run(req.params.id, req.user.uid);
+    const result = await Expense.findOneAndDelete({ 
+      _id: req.params.id, 
+      userId: req.user.uid 
+    });
     
-    if (result.changes === 0) {
+    if (!result) {
       return res.status(404).json({ error: 'Expense not found' });
     }
     
     res.json({ message: 'Deleted successfully' });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error deleting expense:', error);
     res.status(500).json({ error: error.message });
   }
 });
