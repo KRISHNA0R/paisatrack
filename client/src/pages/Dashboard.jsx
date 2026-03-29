@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useAlert } from '../context/AlertContext';
 import { useBudget } from '../hooks/useBudget';
 import ExpenseModal from '../components/ExpenseModal';
 import CategoryCard from '../components/CategoryCard';
 import Charts from '../components/Charts';
-import AlertToast from '../components/AlertToast';
 import SmartInsights from '../components/SmartInsights';
 import PaisaGoals from '../components/PaisaGoals';
 import AnimatedCircularProgressBar from '../components/AnimatedCircularProgressBar';
-import RainbowButton from '../components/RainbowButton';
+import AnimatedNumber from '../components/AnimatedNumber';
+import Toast from '../components/Toast';
+import PredictiveAlerts from '../components/PredictiveAlerts';
 import { CardSkeleton, ChartSkeleton, TableSkeleton } from '../components/Skeleton';
 import { formatCurrency, formatCurrencyCompact } from '../utils/formatCurrency';
 import { getCurrentMonth, getNextMonth, getPrevMonth, getMonthDisplay, formatDateTime } from '../utils/dateHelpers';
@@ -17,6 +19,7 @@ import { getCurrentMonth, getNextMonth, getPrevMonth, getMonthDisplay, formatDat
 const Dashboard = ({ onOpenOnboarding }) => {
   const { user } = useAuth();
   const { budget, loading: budgetLoading, refetch: refetchBudget } = useBudget();
+  const { addAlert } = useAlert();
   const [currentMonth, setCurrentMonth] = useState(getCurrentMonth());
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -62,21 +65,36 @@ const Dashboard = ({ onOpenOnboarding }) => {
       const remaining = budget.totalBudget - summary.totalSpent;
       if (remaining < 0) {
         setToast({
-          message: 'Budget exceeded! You are over budget by ₹' + Math.abs(remaining),
+          message: 'Budget exceeded!',
+          description: `You are over budget by ₹${Math.abs(remaining)}`,
           type: 'error'
         });
       } else if (remaining <= budget.alertThreshold) {
         setToast({
-          message: `Only ₹${remaining} left in your budget!`,
+          message: 'Low Budget Alert!',
+          description: `Only ₹${remaining} left in your budget`,
           type: 'warning'
         });
       }
     }
   }, [summary?.totalSpent, budget]);
 
-  const handleExpenseAdded = () => {
+  const handleExpenseAdded = (expenseData) => {
     fetchData();
     refetchBudget();
+    
+    if (expenseData && remaining > 0) {
+      const percentOfRemaining = (expenseData.amount / remaining) * 100;
+      if (percentOfRemaining >= 30) {
+        addAlert({
+          type: 'warning',
+          title: 'Big Expense Alert!',
+          message: `This is ${Math.round(percentOfRemaining)}% of your remaining budget`,
+          icon: '💸',
+          sendNotification: true
+        });
+      }
+    }
   };
 
   const handleDeleteExpense = async (id) => {
@@ -176,6 +194,13 @@ const Dashboard = ({ onOpenOnboarding }) => {
           </div>
         </motion.div>
 
+        <PredictiveAlerts
+          totalSpent={totalSpent}
+          totalBudget={totalBudget}
+          alertThreshold={budget?.alertThreshold || 1000}
+          currentMonth={currentMonth}
+        />
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -191,8 +216,9 @@ const Dashboard = ({ onOpenOnboarding }) => {
           />
           <SummaryCard
             title="Remaining"
-            value={formatCurrencyCompact(Math.max(0, remaining))}
-            subtitle={`of ${formatCurrency(totalBudget)}`}
+            animatedValue={Math.max(0, Math.round(remaining))}
+            totalBudget={totalBudget}
+            isOverBudget={isOverBudget}
             color={isOverBudget ? 'red' : remaining > totalBudget * 0.25 ? 'green' : 'amber'}
             delay={0.2}
           />
@@ -452,13 +478,23 @@ const Dashboard = ({ onOpenOnboarding }) => {
         </div>
       )}
 
-      <AlertToast toast={toast} onClose={() => setToast(null)} />
+      <AnimatePresence>
+        {toast && (
+          <Toast
+            key={toast.id || Date.now()}
+            message={toast.message}
+            description={toast.description}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </AnimatePresence>
       <BottomNav />
     </div>
   );
 };
 
-const SummaryCard = ({ title, value, subtitle, color, delay }) => {
+const SummaryCard = ({ title, value, subtitle, color, delay, animatedValue, totalBudget, isOverBudget }) => {
   const colorClasses = {
     purple: { bg: 'rgba(123, 47, 255, 0.1)', border: '#7B2FFF', text: '#A78BFA' },
     green: { bg: 'rgba(34, 197, 94, 0.1)', border: '#22C55E', text: '#4ADE80' },
@@ -482,8 +518,27 @@ const SummaryCard = ({ title, value, subtitle, color, delay }) => {
       }}
     >
       <p className="text-xs sm:text-sm text-gray-400 mb-1" style={{ fontFamily: 'Ruckle, sans-serif' }}>{title}</p>
-      <p className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text, fontFamily: 'Ruckle, sans-serif' }}>{value}</p>
-      <p className="text-xs text-gray-500 mt-1 hidden sm:block" style={{ fontFamily: 'Ruckle, sans-serif' }}>{subtitle}</p>
+      {animatedValue !== undefined ? (
+        <>
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl sm:text-2xl font-bold" style={{ color: colors.text, fontFamily: 'Ruckle, sans-serif' }}>₹</span>
+            <AnimatedNumber 
+              value={animatedValue} 
+              className="text-2xl sm:text-3xl font-bold" 
+              style={{ color: colors.text, fontFamily: 'Ruckle, sans-serif' }}
+              duration={800}
+            />
+          </div>
+          <p className="text-xs text-white/70 mt-1 hidden sm:block" style={{ fontFamily: 'Ruckle, sans-serif' }}>
+            of {formatCurrency(totalBudget)}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="text-2xl sm:text-3xl font-bold" style={{ color: colors.text, fontFamily: 'Ruckle, sans-serif' }}>{value}</p>
+          <p className="text-xs text-gray-500 mt-1 hidden sm:block" style={{ fontFamily: 'Ruckle, sans-serif' }}>{subtitle}</p>
+        </>
+      )}
       <div 
         className="absolute top-0 right-0 w-16 sm:w-20 h-16 sm:h-20 rounded-full blur-2xl opacity-30"
         style={{ background: colors.border }}

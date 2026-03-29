@@ -121,7 +121,7 @@ const OnboardingModal = ({ isOpen, onComplete }) => {
             style={{ background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(24px)' }}
           >
             <div className="flex items-center gap-3 mb-6 sm:mb-8">
-              <img src="/logo.png" alt="Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain" />
+              <img src="/logo.png" alt="Logo" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover" />
               <span className="font-bold text-lg sm:text-xl login-gradient-text" style={{ fontFamily: 'Ruckle, sans-serif' }}>PaisaTrack</span>
             </div>
 

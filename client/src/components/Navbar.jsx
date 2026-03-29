@@ -1,8 +1,8 @@
 import { useAuth } from '../context/AuthContext';
-import AnimatedThemeToggler from './AnimatedThemeToggler';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
+import AlertDropdown from './AlertDropdown';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -22,15 +22,16 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 px-3 sm:px-4 py-2.5 sm:py-3"
       style={{ 
-        background: 'rgba(8, 8, 14, 0.9)',
-        backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+        background: 'rgba(10, 10, 26, 0.7)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.06)'
       }}
     >
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7B2FFF 0%, #A855F7 100%)' }}>
-            <img src="/logo.png" alt="Logo" className="w-6 h-6 sm:w-7 sm:h-7 object-contain" />
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #7B2FFF 0%, #A855F7 100%)' }}>
+            <img src="/logo.png" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 object-cover rounded-full" />
           </div>
           <span className="font-bold text-lg sm:text-xl text-white hidden sm:block" style={{ fontFamily: 'Ruckle, sans-serif' }}>
             PaisaTrack
@@ -38,9 +39,10 @@ const Navbar = () => {
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <AnimatedThemeToggler />
 
           {user && (
+            <>
+              <AlertDropdown />
             <div className="relative" ref={dropdownRef}>
               <motion.img
                 whileHover={{ scale: 1.05 }}
@@ -96,6 +98,7 @@ const Navbar = () => {
                 </motion.div>
               )}
             </div>
+            </>
           )}
         </div>
       </div>

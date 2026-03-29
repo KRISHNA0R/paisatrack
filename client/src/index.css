@@ -281,3 +281,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   outline: 2px solid rgba(123, 47, 255, 0.5);
   outline-offset: 2px;
 }
+
+@media (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+  
+  a, button, [role="button"], input, select, textarea, label {
+    cursor: none !important;
+  }
+}
+
+@media (hover: none) or (pointer: coarse) {
+  * {
+    cursor: auto !important;
+  }
+}

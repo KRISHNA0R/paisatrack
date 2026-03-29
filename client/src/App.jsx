@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { AlertProvider } from './context/AlertContext';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -10,16 +10,14 @@ import Monthly from './pages/Monthly';
 import Settings from './pages/Settings';
 import OnboardingModal from './components/OnboardingModal';
 import EtherealShadow from './components/EtherealShadow';
+import SmoothCursor from './components/SmoothCursor';
+import LoadingScreen from './components/LoadingScreen';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#08080E' }}>
-        <div className="w-12 h-12 rounded-full border-4 border-accent-purple border-t-transparent animate-spin" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
   
   return isAuthenticated ? children : <Navigate to="/login" />;
@@ -77,14 +75,7 @@ const AppRoutes = () => {
   }, [isAuthenticated]);
   
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#08080E' }}>
-        <div className="text-center">
-          <div className="w-12 h-12 rounded-full border-4 border-accent-purple border-t-transparent animate-spin mx-auto mb-4" />
-          <p className="text-gray-400 text-sm">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   const handleOnboardingComplete = () => {
@@ -94,6 +85,7 @@ const AppRoutes = () => {
 
   return (
     <>
+      <SmoothCursor />
       <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
@@ -142,14 +134,14 @@ const AppRoutes = () => {
 function App() {
   return (
     <BrowserRouter>
-      <ThemeProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <AlertProvider>
           <div className="dark min-h-screen" style={{ backgroundColor: '#08080E' }}>
             <EtherealShadow />
             <AppRoutes />
           </div>
-        </AuthProvider>
-      </ThemeProvider>
+        </AlertProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

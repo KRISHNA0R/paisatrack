@@ -11,5 +11,17 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'framer': ['framer-motion'],
+          'firebase': ['firebase/app', 'firebase/auth'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600
   }
 })

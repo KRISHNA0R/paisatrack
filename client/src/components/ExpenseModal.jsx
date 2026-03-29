@@ -3,6 +3,45 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useBudget } from '../hooks/useBudget';
 import RainbowButton from './RainbowButton';
+import Toast from './Toast';
+import { formatCurrency } from '../utils/formatCurrency';
+
+const CATEGORY_KEYWORDS = {
+  'Petrol': ['petrol', 'fuel', 'pump', 'gas', 'diesel', 'petro', 'hp', 'bp', 'shell', 'ioc'],
+  'Food': ['food', 'lunch', 'dinner', 'breakfast', 'chai', 'coffee', 'restaurant', 'swiggy', 'zomato', 'meal', 'eat', 'pizza', 'burger', 'biryani', 'tiffin', 'dosa', 'idli', 'paratha', 'thali', 'snack', 'snacks', 'omelette', '蛋'],
+  'Badminton': ['badminton', 'shuttle', 'shuttles', 'court', 'racket', 'grip', 'badmit', 'shuttelcock'],
+  'SIP': ['sip', 'invest', 'mutual fund', 'stock', 'shares', 'mf', 'nps', 'fd', 'rd'],
+  'Travel': ['uber', 'ola', 'auto', 'bus', 'metro', 'ticket', 'train', 'flight', 'cab', 'taxi', 'ride', 'travel', 'trip', 'vacation', 'holiday', 'journey'],
+  'Entertainment': ['movie', 'netflix', 'amazon prime', 'hotstar', 'disney', 'game', 'gaming', 'ps5', 'xbox', 'concert', 'show', 'theatre', 'series', 'web series', 'spotify', 'youtube premium'],
+  'Groceries': ['grocery', 'groceries', 'vegetables', 'fruits', 'market', 'kirana', 'bigbasket', 'reliance', 'dmart', 'supermarket'],
+  'Shopping': ['shopping', 'clothes', 'clothing', 'shoes', 'amazon', 'myntra', 'flipkart', 'fashion', 'dress', 'shirt', 'jeans'],
+  'Health': ['medicine', 'medical', 'doctor', 'hospital', 'pharmacy', 'health', 'gym', 'fitness', 'yoga', 'vitamin'],
+  'Utilities': ['electricity', 'water', 'bill', 'phone', 'internet', 'wifi', 'recharge', 'gas cylinder', 'rent']
+};
+
+const detectCategory = (note, existingCategories) => {
+  if (!note || note.trim().length < 2) return null;
+  const lowerNote = note.toLowerCase();
+  
+  for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lowerNote.includes(keyword)) {
+        const matchedCategory = existingCategories?.find(c => c.name === category);
+        return matchedCategory || { name: category, icon: getCategoryIcon(category) };
+      }
+    }
+  }
+  return null;
+};
+
+const getCategoryIcon = (name) => {
+  const icons = {
+    'Petrol': '⛽', 'Food': '🍔', 'Badminton': '🏸', 'SIP': '💰',
+    'Travel': '✈️', 'Entertainment': '🎬', 'Groceries': '🛒', 'Shopping': '🛍️',
+    'Health': '💊', 'Utilities': '📱', 'Others': '📝', 'Miscellaneous': '📦'
+  };
+  return icons[name] || '📦';
+};
 
 const DEFAULT_CATEGORIES = [
   { name: 'Petrol', icon: '⛽' },
@@ -38,6 +77,8 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const [suggestedCategory, setSuggestedCategory] = useState(null);
 
   const categories = budget?.categories?.length > 0 
     ? budget.categories 
@@ -47,6 +88,7 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setFormData(prev => ({ ...prev, date: getCurrentDateTime() }));
+      setSuggestedCategory(null);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -54,6 +96,17 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    const detected = detectCategory(formData.note, categories);
+    setSuggestedCategory(detected);
+  }, [formData.note, categories]);
+
+  const applySuggestion = () => {
+    if (suggestedCategory) {
+      setFormData(prev => ({ ...prev, category: suggestedCategory.name }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,8 +136,11 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
       if (!res.ok) throw new Error('Failed to add expense');
 
       setFormData({ amount: '', category: '', note: '', date: getCurrentDateTime() });
-      onSuccess?.();
-      onClose();
+      setShowToast(true);
+      setTimeout(() => {
+        onSuccess?.({ amount: parseFloat(formData.amount), category: formData.category });
+        onClose();
+      }, 1500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -206,6 +262,35 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
                     }}
                     placeholder="What was this for?"
                   />
+                  <AnimatePresence>
+                    {suggestedCategory && !formData.category && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                        animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                        exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-xs text-gray-400" style={{ fontFamily: 'Ruckle, sans-serif' }}>Suggested:</span>
+                        <button
+                          type="button"
+                          onClick={applySuggestion}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all hover:scale-105"
+                          style={{ 
+                            background: 'rgba(123, 47, 255, 0.15)',
+                            border: '1px solid rgba(123, 47, 255, 0.3)',
+                            color: '#A78BFA',
+                            fontFamily: 'Ruckle, sans-serif'
+                          }}
+                        >
+                          <span>{suggestedCategory.icon}</span>
+                          <span>{suggestedCategory.name}</span>
+                          <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div>
@@ -328,6 +413,35 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
                   }}
                   placeholder="What was this for?"
                 />
+                <AnimatePresence>
+                  {suggestedCategory && !formData.category && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-xs text-gray-400" style={{ fontFamily: 'Ruckle, sans-serif' }}>Suggested:</span>
+                      <button
+                        type="button"
+                        onClick={applySuggestion}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all hover:scale-105"
+                        style={{ 
+                          background: 'rgba(123, 47, 255, 0.15)',
+                          border: '1px solid rgba(123, 47, 255, 0.3)',
+                          color: '#A78BFA',
+                          fontFamily: 'Ruckle, sans-serif'
+                        }}
+                      >
+                        <span>{suggestedCategory.icon}</span>
+                        <span>{suggestedCategory.name}</span>
+                        <svg className="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <div>
@@ -359,6 +473,17 @@ const ExpenseModal = ({ isOpen, onClose, month, onSuccess }) => {
               </RainbowButton>
             </form>
           </motion.div>
+
+          <AnimatePresence>
+            {showToast && (
+              <Toast
+                message="Expense Added!"
+                description={`₹${formData.amount} spent on ${formData.category}`}
+                type="success"
+                onClose={() => setShowToast(false)}
+              />
+            )}
+          </AnimatePresence>
         </>
       )}
     </AnimatePresence>

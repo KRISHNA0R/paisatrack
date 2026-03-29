@@ -25,6 +25,7 @@ const EtherealShadow = () => {
       />
 
       <div
+        className="hidden md:block"
         style={{
           position: 'absolute',
           width: '800px',
@@ -38,6 +39,7 @@ const EtherealShadow = () => {
       />
 
       <div
+        className="hidden md:block"
         style={{
           position: 'absolute',
           width: '700px',
@@ -51,6 +53,7 @@ const EtherealShadow = () => {
       />
 
       <div
+        className="hidden md:block"
         style={{
           position: 'absolute',
           width: '600px',
@@ -65,6 +68,7 @@ const EtherealShadow = () => {
       />
 
       <div
+        className="hidden md:block"
         style={{
           position: 'absolute',
           width: '500px',
@@ -78,6 +82,7 @@ const EtherealShadow = () => {
       />
 
       <div
+        className="hidden md:block"
         style={{
           position: 'absolute',
           inset: 0,
